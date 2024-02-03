@@ -104,7 +104,7 @@ def render_circular_video(model_path, iteration, views, gaussians, pipeline, bac
 
 
 
-def render_video(model_path, iteration, views, gaussians, pipeline, background):
+def render_video(model_path, iteration, views, gaussians, pipeline, background, args):
     render_path = os.path.join(model_path, 'video', "ours_{}".format(iteration))
     makedirs(render_path, exist_ok=True)
     view = views[0]
@@ -116,7 +116,9 @@ def render_video(model_path, iteration, views, gaussians, pipeline, background):
         view.camera_center = view.world_view_transform.inverse()[3, :3]
         rendering = render(view, gaussians, pipeline, background)["render"]
         torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
-
+    
+    # use ffmpeg to render list of images to 30fps video
+    exit_code = os.system(f"ffmpeg -y -i {render_path}/%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"scale=trunc(iw/2)*2:trunc(ih/2)*2\" {model_path}/{args.scene}.mp4")
 
 
 
@@ -154,7 +156,7 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
         # by default generate ellipse path, other options include spiral, circular, or other generate_xxx_path function from utils.pose_utils 
         # Modify trajectory function in render_video's enumerate 
         if video:
-            render_video(dataset.model_path, scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background)
+            render_video(dataset.model_path, scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, args)
         #sample virtual view 
         if args.gaussians:
             gaussian_render(dataset.model_path, scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, args)
@@ -176,6 +178,7 @@ if __name__ == "__main__":
     parser.add_argument("--mean", default=0, type=float)
     parser.add_argument("--std", default=0.03, type=float)
     parser.add_argument("--load_vq", action="store_true")
+    parser.add_argument("--scene", default="video", type=str)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
 
