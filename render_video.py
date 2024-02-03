@@ -108,8 +108,6 @@ def render_video(model_path, iteration, views, gaussians, pipeline, background, 
     render_path = os.path.join(model_path, 'video', "ours_{}".format(iteration))
     makedirs(render_path, exist_ok=True)
     view = views[0]
-    # render_path_spiral
-    # render_path_spherical
     for idx, pose in enumerate(tqdm(generate_ellipse_path(views,n_frames=600), desc="Rendering progress")):
         view.world_view_transform = torch.tensor(getWorld2View2(pose[:3, :3].T, pose[:3, 3], view.trans, view.scale)).transpose(0, 1).cuda()
         view.full_proj_transform = (view.world_view_transform.unsqueeze(0).bmm(view.projection_matrix.unsqueeze(0))).squeeze(0)
@@ -118,7 +116,7 @@ def render_video(model_path, iteration, views, gaussians, pipeline, background, 
         torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
     
     # use ffmpeg to render list of images to 30fps video
-    exit_code = os.system(f"ffmpeg -y -i {render_path}/%05d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"scale=trunc(iw/2)*2:trunc(ih/2)*2\" {model_path}/{args.scene}.mp4")
+    exit_code = os.system(f"ffmpeg -y -i {render_path}/%05d.png -r 30 -pix_fmt yuv420p -vf \"scale=trunc(iw/2)*2:trunc(ih/2)*2\" {model_path}/{args.scene}.mp4")
 
 
 
@@ -156,7 +154,7 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
         # by default generate ellipse path, other options include spiral, circular, or other generate_xxx_path function from utils.pose_utils 
         # Modify trajectory function in render_video's enumerate 
         if video:
-            render_video(dataset.model_path, scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, args)
+            render_video(dataset.model_path, scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, args)
         #sample virtual view 
         if args.gaussians:
             gaussian_render(dataset.model_path, scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, args)
