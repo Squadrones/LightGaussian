@@ -225,7 +225,7 @@ def training(
                     np.savez(os.path.join(scene.model_path,"imp_score"), v_list.cpu().detach().numpy()) 
 
 
-if __name__ == "__main__":
+def main(input_args):
     # Set up command line argument parser
     parser = ArgumentParser(description="Training script parameters")
     lp = ModelParams(parser)
@@ -256,7 +256,8 @@ if __name__ == "__main__":
     parser.add_argument("--prune_percent", type=float, default=0.5)
     parser.add_argument("--v_pow", type=float, default=0.1)
     parser.add_argument("--prune_decay", type=float, default=0.8)
-    args = parser.parse_args(sys.argv[1:])
+    # args = parser.parse_args(sys.argv[1:])
+    args = parser.parse_args(input_args)
     args.save_iterations.append(args.iterations)
 
     print("Optimizing " + args.model_path)
@@ -279,3 +280,6 @@ if __name__ == "__main__":
 
     # All done
     print("\nTraining complete.")
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
